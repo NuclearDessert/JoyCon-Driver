@@ -694,7 +694,7 @@ void updatevJoyDevice2(Joycon *jc) {
 		// x:
 		float pitchDegreesAccel = glm::degrees((atan2(-jc->accel.x, -jc->accel.z) + PI));
 		float pitchDegreesGyro = -jc->gyro.pitch * gyroCoeff;
-		float pitch = 0;
+		float pitch = 0.5;
 
 		tracker.anglex += pitchDegreesGyro;
 		if ((pitchDegreesAccel - tracker.anglex) > 180) {
@@ -711,7 +711,7 @@ void updatevJoyDevice2(Joycon *jc) {
 		// y:
 		float rollDegreesAccel = -glm::degrees((atan2(-jc->accel.y, -jc->accel.z) + PI));
 		float rollDegreesGyro = -jc->gyro.roll * gyroCoeff;
-		float roll = 0;
+		float roll = 0.5;
 
 		tracker.angley += rollDegreesGyro;
 		if ((rollDegreesAccel - tracker.angley) > 180) {
@@ -733,7 +733,7 @@ void updatevJoyDevice2(Joycon *jc) {
 		// z:
 		float yawDegreesAccel = glm::degrees((atan2(-jc->accel.y, -jc->accel.x) + PI));
 		float yawDegreesGyro = -jc->gyro.yaw * gyroCoeff;
-		float yaw = 0;
+		float yaw = 0.5;
 
 		tracker.anglez += lowpassFilter(yawDegreesGyro, 0.5);
 		//if ((yawInDegreesAccel - tracker.anglez) > 180) {
@@ -2194,7 +2194,7 @@ void MainFrame::onQuit2(wxCloseEvent&) {
 
 
 void MainFrame::checkForUpdate() {
-
+/*
 	download("version.txt", "https://fosse.co/version.txt");
 	std::ifstream ifs("version.txt");
 	std::string content;
@@ -2210,7 +2210,7 @@ void MainFrame::checkForUpdate() {
 		alert.Printf("To update to the latest version, just click check for update, and the latest version will be installed automatically.\n");
 		wxMessageBox(alert);
 	}
-
+*/
 	//if (!upToDate) {
 	//	wxString text;
 	//	text.Printf("Updating! the program will now close, it may fail so check the version when the script finishes.\n");

@@ -78,8 +78,8 @@ public:
 	struct Gyroscope {
 		// relative:
 		float pitch	= 0;
-		float yaw	= 0;
-		float roll	= 0;
+		float yaw	= 0.5;
+		float roll	= 0.5;
 
 		struct Offset {
 			int n = 0;
