@@ -21,6 +21,9 @@ A vJoy feeder / Driver for the Nintendo Switch JoyCons and Pro Controller on Win
 6. Here's a screenshot of the actual program:
 	* ![Imgur](https://i.imgur.com/ihK9WNf.png)
 
+## Release
+The latest release can be found under "joycon-driver\build\Win32\Release"
+
 ## Settings and features (some settings are only in the config file!)
 * Combine JoyCons
 	* Combines a pair of JoyCons into a single vJoy device
