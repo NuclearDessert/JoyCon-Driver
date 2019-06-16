@@ -10,6 +10,7 @@
 #include <iomanip>
 #include <iostream>
 #include <fstream>
+#include <conio.h>
 
 #include <hidapi.h>
 
@@ -84,6 +85,16 @@ struct Settings {
 	// JoyCon(R) is mapped to vJoy Device #2
 	// when combineJoyCons == true:
 	// JoyCon(L) and JoyCon(R) are mapped to vJoy Device #1
+	int ResetGyroKey = 83;
+
+	int gyroRot = 16384;
+	int gyroSlider = 16384;
+	int gyroDial = 16384;
+
+	bool gyroRotCentered = false;
+	bool gyroSliderCentered = false;
+	bool gyroDialCentered = false;
+
 	bool combineJoyCons = false;
 
 	bool reverseX = false;// reverses joystick x (both sticks)
@@ -98,6 +109,8 @@ struct Settings {
 
 	// gyroscope (mouse) sensitivity:
 	float gyroSensitivityX = 150.0f;
+	float gyroSensitivityX2 = 150.0f;
+	float gyroSensitivityX3 = 150.0f;
 	float gyroSensitivityY = 150.0f;
 
 
@@ -165,7 +178,7 @@ struct Settings {
 	float timeToSleepMS = 4.0f;
 
 	// version number
-	std::string version = "1.07";
+	std::string version = "1.07 - Shu";
 
 } settings;
 
@@ -573,7 +586,6 @@ int acquirevJoyDevice(int deviceID) {
 	}
 }
 
-
 void updatevJoyDevice2(Joycon *jc) {
 
 	UINT DevID;
@@ -694,7 +706,7 @@ void updatevJoyDevice2(Joycon *jc) {
 		// x:
 		float pitchDegreesAccel = glm::degrees((atan2(-jc->accel.x, -jc->accel.z) + PI));
 		float pitchDegreesGyro = -jc->gyro.pitch * gyroCoeff;
-		float pitch = 0.5;
+		float pitch = 0;
 
 		tracker.anglex += pitchDegreesGyro;
 		if ((pitchDegreesAccel - tracker.anglex) > 180) {
@@ -711,7 +723,7 @@ void updatevJoyDevice2(Joycon *jc) {
 		// y:
 		float rollDegreesAccel = -glm::degrees((atan2(-jc->accel.y, -jc->accel.z) + PI));
 		float rollDegreesGyro = -jc->gyro.roll * gyroCoeff;
-		float roll = 0.5;
+		float roll = 0;
 
 		tracker.angley += rollDegreesGyro;
 		if ((rollDegreesAccel - tracker.angley) > 180) {
@@ -733,7 +745,7 @@ void updatevJoyDevice2(Joycon *jc) {
 		// z:
 		float yawDegreesAccel = glm::degrees((atan2(-jc->accel.y, -jc->accel.x) + PI));
 		float yawDegreesGyro = -jc->gyro.yaw * gyroCoeff;
-		float yaw = 0.5;
+		float yaw = 0;
 
 		tracker.anglez += lowpassFilter(yawDegreesGyro, 0.5);
 		//if ((yawInDegreesAccel - tracker.anglez) > 180) {
@@ -811,6 +823,8 @@ void updatevJoyDevice2(Joycon *jc) {
 		}
 
 		float mult = settings.gyroSensitivityX * 10.0f;
+		float mult2 = settings.gyroSensitivityX2 * 10.0f;
+		float mult3 = settings.gyroSensitivityX3 * 10.0f;
 
 
 		if (gyroActuallyOn) {
@@ -818,17 +832,44 @@ void updatevJoyDevice2(Joycon *jc) {
 		}
 
 		if (settings.dolphinPointerMode) {
-			iReport.wAxisZRot += (jc->gyro.roll * mult);
-			iReport.wSlider += (jc->gyro.pitch * mult);
-			iReport.wDial += (jc->gyro.yaw * mult);
 
-			iReport.wAxisZRot = clamp(iReport.wAxisZRot, 0, 32678);
-			iReport.wSlider = clamp(iReport.wSlider, 0, 32678);
-			iReport.wDial = clamp(iReport.wDial, 0, 32678);
+
+			if (GetKeyState(settings.ResetGyroKey) & 0x8000) {
+
+				//wxMessageBox("Quack");
+				iReport.wAxisZRot = 16384;
+				iReport.wSlider = 16384;
+				iReport.wDial = 16384;
+			}
+			else {
+				if (settings.gyroRotCentered) {
+					iReport.wAxisZRot = 16384 + (jc->gyro.roll * mult);
+				}
+				else {
+					iReport.wAxisZRot += (jc->gyro.roll * mult);
+					iReport.wAxisZRot = clamp(iReport.wAxisZRot, 0, 32678);
+				}
+				if (settings.gyroSliderCentered) {
+					iReport.wSlider = 16384 + (jc->gyro.pitch * mult2);
+				}
+				else {
+					iReport.wSlider += (jc->gyro.pitch * mult2);
+					iReport.wSlider = clamp(iReport.wSlider, 0, 32678);
+				}
+				if (settings.gyroDialCentered) {
+					iReport.wDial = 16384 + (jc->gyro.yaw * mult3);
+				}
+				else {
+					iReport.wDial += (jc->gyro.yaw * mult3);
+					iReport.wDial = clamp(iReport.wDial, 0, 32678);
+				}
+			}
+			
+			
 		} else {
 			iReport.wAxisZRot = 16384 + (jc->gyro.roll * mult);
-			iReport.wSlider = 16384 + (jc->gyro.pitch * mult);
-			iReport.wDial = 16384 + (jc->gyro.yaw * mult);
+			iReport.wSlider = 16384 + (jc->gyro.pitch * mult2);
+			iReport.wDial = 16384 + (jc->gyro.yaw * mult3);
 		}
 	}
 
@@ -882,6 +923,9 @@ void parseSettings2() {
 	settings.enableGyro = (bool)stoi(cfg["gyroControls"]);
 
 	settings.gyroSensitivityX = stof(cfg["gyroSensitivityX"]);
+	settings.gyroSensitivityX2 = stof(cfg["gyroSensitivityX2"]);
+	settings.gyroSensitivityX3 = stof(cfg["gyroSensitivityX3"]);
+
 	settings.gyroSensitivityY = stof(cfg["gyroSensitivityY"]);
 
 	settings.gyroWindow = (bool)stoi(cfg["gyroWindow"]);
@@ -908,6 +952,16 @@ void parseSettings2() {
 	settings.writeCastToFile = (bool)stoi(cfg["writeCastToFile"]);
 
 	settings.autoStart = (bool)stoi(cfg["autoStart"]);
+
+	settings.gyroRot = stoi(cfg["gyroRot"]);
+	settings.gyroSlider = stoi(cfg["gyroSlider"]);
+	settings.gyroDial = stoi(cfg["gyroDial"]);
+
+	settings.gyroRotCentered = (bool)stoi(cfg["gyroRotCentered"]);
+	settings.gyroSliderCentered = (bool)stoi(cfg["gyroSliderCentered"]);
+	settings.gyroDialCentered = (bool)stoi(cfg["gyroDialCentered"]);
+
+	settings.ResetGyroKey = stof(cfg["ResetGyroKey"]);
 
 }
 
@@ -1126,8 +1180,11 @@ void pollLoop() {
 
 void start() {
 
+	// Set initial Gyro Position
 
-
+	iReport.wAxisZRot = settings.gyroRot;
+	iReport.wSlider = settings.gyroDial;
+	iReport.wDial = settings.gyroSlider;
 
 	// set infinite reconnect attempts
 	myClient.set_reconnect_attempts(999999999999);
@@ -2063,7 +2120,7 @@ TestGLContext& MyApp::GetContext(wxGLCanvas *canvas, bool useStereo) {
 
 
 
-MainFrame::MainFrame() : wxFrame(NULL, wxID_ANY, wxT("JoyCon-Driver by fosse ©2018")) {
+MainFrame::MainFrame() : wxFrame(NULL, wxID_ANY, wxT("JoyCon-Driver by fosse ©2019 (Ver S)")) {
 
 	wxPanel *panel = new wxPanel(this, wxID_ANY);
 

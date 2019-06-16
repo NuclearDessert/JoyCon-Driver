@@ -78,8 +78,8 @@ public:
 	struct Gyroscope {
 		// relative:
 		float pitch	= 0;
-		float yaw	= 0.5;
-		float roll	= 0.5;
+		float yaw	= 0;
+		float roll	= 0;
 
 		struct Offset {
 			int n = 0;
@@ -92,12 +92,12 @@ public:
 	} gyro;
 
 	struct Accelerometer {
-		float prevX = 0;
-		float prevY = 0;
-		float prevZ = 0;
-		float x = 0;
-		float y = 0;
-		float z = 0;
+		float prevX = 0.5;
+		float prevY = 0.5;
+		float prevZ = 0.5;
+		float x = 0.5;
+		float y = 0.5;
+		float z = 0.5;
 	} accel;
 
 

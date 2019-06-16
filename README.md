@@ -55,6 +55,16 @@ A vJoy feeder / Driver for the Nintendo Switch JoyCons and Pro Controller on Win
 * Broadcast mode
 	* Don't use this, probably
 
+## New Gyro Config Options (Most of these require Dolphin Mode ON and Autostart OFF)
+* gyroRot/gyroSlider/gyroDial
+	* Sets the initial position of the gyro axes (Between 0 and 32768)
+* GyroSensitivityX/X2/X3
+	* Sets the sensitivity of each gyro axis independently (For the vjoy gyro) (Note: Only GyroSensitivityX affects the gyro mouse)
+* gyroRotCentered/gyroSliderCentered/gyroDialCentered
+	* Autocenters each gyro axis independently (Similarly to if Dolphin Mode is off) [0 for OFF, 1 for ON]
+* ResetGyroKey
+	* Sets a key to reset the position of all gyro axes to the center (Uses ASCII Keycodes -- Escape Key by default)
+
 ## Important Notes
 * The JoyCons need to be re-paired anytime after they've reconnected to the switch
 
