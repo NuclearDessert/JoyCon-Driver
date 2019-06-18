@@ -11,6 +11,7 @@
 #include <iostream>
 #include <fstream>
 #include <conio.h>
+typedef std::chrono::high_resolution_clock Clock;
 
 #include <hidapi.h>
 
@@ -177,8 +178,15 @@ struct Settings {
 	// time to sleep (in ms) between polls:
 	float timeToSleepMS = 4.0f;
 
+	int resetTimerRot = 0;
+	int resetTimerSlider = 0;
+	int resetTimerDial = 0;
+	int resetDistanceRot = 0;
+	int resetDistanceSlider = 0;
+	int resetDistanceDial = 0;
+
 	// version number
-	std::string version = "1.07 - Shu";
+	std::string version = "1.07 (Mod v2)";
 
 } settings;
 
@@ -209,6 +217,7 @@ struct Tracker {
 	//auto tSleepStart = std::chrono::high_resolution_clock::now();
 
 	float previousPitch = 0;
+
 } tracker;
 
 
@@ -536,7 +545,12 @@ void handle_input(Joycon *jc, uint8_t *packet, int len) {
 }
 
 
-
+auto t1Rot = Clock::now();
+auto t2Rot = Clock::now();
+auto t1Slider = Clock::now();
+auto t2Slider = Clock::now();
+auto t1Dial = Clock::now();
+auto t2Dial = Clock::now();
 
 
 int acquirevJoyDevice(int deviceID) {
@@ -832,9 +846,59 @@ void updatevJoyDevice2(Joycon *jc) {
 		}
 
 		if (settings.dolphinPointerMode) {
+			/*
+			if (16384 - settings.resetDistance < iReport.wAxisZRot < 16384 + settings.resetDistance && settings.resetTimer != 0) {
+				int t = 0;
+				auto t1 = Clock::now();
 
+				while (t < 1) {
+					auto t2 = Clock::now();
+					int a = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
+					if (a > settings.resetTimer) {
+						iReport.wAxisZRot = 16384;
+						t1 = Clock::now();
+					}
+				}
+			}*/
+			
 
-			if (GetKeyState(settings.ResetGyroKey) & 0x8000) {
+					
+			t2Rot = Clock::now();
+			int aRot = std::chrono::duration_cast<std::chrono::milliseconds>(t2Rot - t1Rot).count();
+
+			t2Slider = Clock::now();
+			int aSlider = std::chrono::duration_cast<std::chrono::milliseconds>(t2Slider - t1Slider).count();
+
+			t2Dial = Clock::now();
+			int aDial = std::chrono::duration_cast<std::chrono::milliseconds>(t2Dial - t1Dial).count();
+			
+			if (aRot >= settings.resetTimerRot) 
+			{
+				if (iReport.wAxisZRot <= 16384 + settings.resetDistanceRot && iReport.wAxisZRot >= 16384 - settings.resetDistanceRot && settings.resetTimerRot < 10000)
+				{
+					iReport.wAxisZRot = 16384;
+				}
+				t1Rot = Clock::now();
+			}
+
+			if (aSlider >= settings.resetTimerSlider)
+			{
+				if (iReport.wSlider <= 16384 + settings.resetDistanceSlider && iReport.wSlider >= 16384 - settings.resetDistanceSlider && settings.resetTimerSlider < 10000)
+				{					iReport.wSlider = 16384;				
+				}
+				t1Slider = Clock::now();
+			}
+
+			if (aDial >= settings.resetTimerDial)
+			{
+				if (iReport.wDial <= 16384 + settings.resetDistanceDial && iReport.wDial >= 16384 - settings.resetDistanceDial && settings.resetTimerDial < 10000)
+				{
+					iReport.wDial = 16384;
+				}
+				t1Dial = Clock::now();
+			}
+
+			if (GetAsyncKeyState(settings.ResetGyroKey) & 0x8000) {
 
 				//wxMessageBox("Quack");
 				iReport.wAxisZRot = 16384;
@@ -962,6 +1026,13 @@ void parseSettings2() {
 	settings.gyroDialCentered = (bool)stoi(cfg["gyroDialCentered"]);
 
 	settings.ResetGyroKey = stof(cfg["ResetGyroKey"]);
+
+	settings.resetTimerRot = stoi(cfg["resetTimerRot"]);
+	settings.resetTimerSlider = stoi(cfg["resetTimerSlider"]);
+	settings.resetTimerDial = stoi(cfg["resetTimerDial"]);
+	settings.resetDistanceRot = stof(cfg["resetDistanceRot"]);
+	settings.resetDistanceSlider = stof(cfg["resetDistanceSlider"]);
+	settings.resetDistanceDial = stof(cfg["resetDistanceDial"]);
 
 }
 
@@ -2120,7 +2191,7 @@ TestGLContext& MyApp::GetContext(wxGLCanvas *canvas, bool useStereo) {
 
 
 
-MainFrame::MainFrame() : wxFrame(NULL, wxID_ANY, wxT("JoyCon-Driver by fosse ©2019 (Ver S)")) {
+MainFrame::MainFrame() : wxFrame(NULL, wxID_ANY, wxT("JoyCon-Driver by fosse ©2019 (Shu Ver)")) {
 
 	wxPanel *panel = new wxPanel(this, wxID_ANY);
 
@@ -2178,7 +2249,7 @@ MainFrame::MainFrame() : wxFrame(NULL, wxID_ANY, wxT("JoyCon-Driver by fosse ©20
 
 
 	slider1Text = new wxStaticText(panel, wxID_ANY, wxT("Gyro Controls Sensitivity X"), wxPoint(20, 200));
-	st1 = new wxStaticText(panel, wxID_ANY, wxT("(Also the sensitivity for Rz/sl0/sl1)"), wxPoint(40, 220));
+	st1 = new wxStaticText(panel, wxID_ANY, wxT("(Also the sensitivity for Rz)"), wxPoint(40, 220));
 	slider1 = new wxSlider(panel, wxID_ANY, settings.gyroSensitivityX, -1000, 1000, wxPoint(180, 180), wxSize(150, 20), wxSL_LABELS);
 	slider1->Bind(wxEVT_SLIDER, &MainFrame::setGyroSensitivityX, this);
 
